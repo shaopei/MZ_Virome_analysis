@@ -58,4 +58,42 @@ mkdir scythed_tagcleaned_sickled
 sickle se -q 30 -t sanger -l 30 -f scythed_tagcleaned_${sample}_R1.fastq -o scythed_tagcleaned_sickled/8L_PF_scythed_tagcleaned_sickled_${sample}_R1.fastq
 sickle se -q 30 -t sanger -l 30 -f scythed_tagcleaned_${sample}_R2.fastq -o scythed_tagcleaned_sickled/8L_PF_scythed_tagcleaned_sickled_${sample}_R2.fastq
 
+#use in house python script to identify pairs of reads
+cd scythed_tagcleaned_sickled
+mkdir scythed_tagcleaned_sickled_paired
+for f in *_R1.fastq; do python pair.py $f; done
+
+# De novo assembled using Integrated metagenomic assembly pipeline for short reads (InteMAP) (Lai et al., 2015) with insert size 325 bp ± 100 bp. 
+cd scythed_tagcleaned_sickled_paired
+# The first run of assembly. Each sample was assembled separately.
+mkdir ${sample}
+mv 8L_PF_scythed_tagcleaned_sickled_${sample}_paired_R1.fastq 8L_PF_scythed_tagcleaned_sickled_${sample}_paired_R2.fastq ${sample}/.
+cd ${sample}
+echo 8L_PF_scythed_tagcleaned_sickled_${sample}_paired_R1.fastq 8L_PF_scythed_tagcleaned_sickled_${sample}_paired_R2.fastq >  ${sample}_8L_files
+echo -libraryname y1 -insertsize 325 100 -type sanger -technology illumina-long > ${sample}_library_info_file
+python InteMAP_v1.0/runInteMAP.py ${sample}_8L_files ${sample}_library_info_file
+
+# After the first run of assembly, the reads were mapped to the assembled contigs using Bowtie 2 v.2.2.8 (Langmead and Salzberg, 2012) with the following parameter: --local --maxins 800. 
+mkdir ${sample}_8Lpp_bowtie2_local
+mkdir ${sample}_unpp_bowtie2_local
+echo ${sample} > ${sample}_8Lraw_mapto_8Lraw.out.fa_bowtie2.log
+bowtie2-build out.fa out.fa.bowtie
+bowtie2 --local --maxins 800 -p 36 -x out.fa.bowtie -1 8L_PF_scythed_tagcleaned_sickled_${sample}_paired_R1.fastq -2 8L_PF_scythed_tagcleaned_sickled_${sample}_paired_R2.fastq -S out.bowtie.sam_8L_800 --al-conc ${sample}_8Lpp_bowtie2_local/${sample}_pp_800_R%.fastq --un-conc ${sample}_unpp_bowtie2_local/${sample}_8L_800_unpp_R%.fastq >> ${sample}_8Lraw_mapto_8Lraw.out.fa_bowtie2.log 2>&1
+
+#The pairs of reads that aligned concordantly at least once were then submitted for the second run of assemble by InteMAP. Each sample was assembled separately.
+cd ${sample}_8Lpp_bowtie2_local
+echo ${sample}_pp_800_R1.fastq ${sample}_pp_800_R2.fastq > ${sample}_pp_files
+python InteMAP_v1.0/runInteMAP.py ${sample}_pp_files ../${sample}_library_info_file > ${sample}_8Lpp_InteMAP.log 2>&1
+
+# soft link all contigs from the second assembly to a folder InterMAP_out.fa_pp and combine them into a file
+cd ../..
+mkdir InterMAP_out.fa_pp
+ln -s ${sample}/${sample}_8Lpp_bowtie2_local/out.fa ${sample}_8Lpp_out.fa
+python add_prefix_and_Combine_fasta.py
+
+#Contigs larger than 500 bp from this second assembly were used for subsequent analysis.
+python filter_contig_by_size.py Combined_InteMAP_pp_contigs.fa 500
+
+#Genes were predicted from the assembled contigs that were larger than 500 bp using GeneMarkS v.4.32 (Besemer et al., 2001). 
+gmsn.pl --faa --pdf --phage Combined_InteMAP_pp_contigs.fa_LargerThan500
 
