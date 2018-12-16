@@ -8,7 +8,7 @@ import sys
 # Change the following settings to suit your needs
 
 file_head= sys.argv[1][:-9]
-output_folder_path='/workdir/sc2457/pool_MZ_48_Virome_processed_pool/scythed_tagcleaned_sickled_paired/'
+output_folder_path='scythed_tagcleaned_sickled_paired/'
 
 input_forward_filename = file_head+"_R1.fastq"
 input_reverse_filename = file_head+"_R2.fastq"
