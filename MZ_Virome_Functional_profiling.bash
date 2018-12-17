@@ -49,6 +49,10 @@ cd diamond_output
 # DIAMOND outputs were organized by an in-house python script m8_parser.py to generate a read hits abundance matrix (diamond_blastx_m8_parsed_subject.txt)
 python m8_parser.py
 
+# The matrix was then annotated according to the KEGG annotation of each gene provided by IGC. 
+python annotate_otu_table.py diamond_blastx_m8_parsed_subject.txt IGC_20150727/IGC.annotation_OF.summary
+
+
 
 
 
