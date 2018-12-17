@@ -55,14 +55,35 @@ echo ${sample}_pp_800_R1.fastq ${sample}_pp_800_R2.fastq > ${sample}_pp_files
 python InteMAP_v1.0/runInteMAP.py ${sample}_pp_files ../${sample}_library_info_file > ${sample}_8Lpp_InteMAP.log 2>&1
 
 # soft link all contigs from the second assembly to a folder InterMAP_out.fa_pp and combine them into a file
-cd ../..
+cd ../../
 mkdir InterMAP_out.fa_pp
-ln -s ${sample}/${sample}_8Lpp_bowtie2_local/out.fa ${sample}_8Lpp_out.fa
-python add_prefix_and_Combine_fasta.py
+ln -s ${sample}/${sample}_8Lpp_bowtie2_local/out.fa InterMAP_out.fa_pp/${sample}_8Lpp_out.fa
+cd InterMAP_out.fa_pp
+python add_prefix_and_Combine_fasta.py 
+#output is Combined_InteMAP_pp_contigs.fa
 
 #Contigs larger than 500 bp from this second assembly were used for subsequent analysis.
-python filter_contig_by_size.py Combined_InteMAP_pp_contigs.fa 500
+python filter_contig_by_size.py Combined_InteMAP_pp_contigs.fa 500 
+# output is Combined_InteMAP_pp_contigs.fa_LargerThan500
 
 #Genes were predicted from the assembled contigs that were larger than 500 bp using GeneMarkS v.4.32 (Besemer et al., 2001). 
 gmsn.pl --faa --pdf --phage Combined_InteMAP_pp_contigs.fa_LargerThan500
+# output is Combined_InteMAP_pp_contigs.fa_LargerThan500.faa
+# substitue tab for _
+sed -i $'s/\t/_/g'  Combined_InteMAP_pp_contigs.fa_LargerThan500.faa
+
+#The amino acid sequence of the predicted genes were then used in a BLASTp search against the customized viral NR database of 621,095 sequences downloaded from http://pathology.wustl.edu/virusseeker/data/VirusDBNR_20131107_ID98.tgz (Lim et al., 2015) using DIAMOND v.0.7.5 (Buchfink et al., 2015) with maximum e-value cutoff 0.001 and maximum number of target sequences to report set to 25. 
+mkdir diamond_output
+mkdir diamond.temp
+/programs/diamond-0.7.5/diamond makedb --in VirusDBNR_20131107_ID98.fa -d VirusDBNR_20131107_ID98 -p 16
+/programs/diamond-0.7.5/diamond blastp -p 8 -v -d VirusDBNR_20131107_ID98 -q Combined_InteMAP_pp_contigs.fa_LargerThan500.faa -a diamond_output/Combined_InteMAP_pp_LargerThan500_Lim_k25_matches -t diamond.temp
+#output is Combined_InteMAP_pp_LargerThan500_Lim_k25_matches.daa
+cd diamond_output
+/programs/diamond-0.7.5/diamond view -a Combined_InteMAP_pp_LargerThan500_Lim_k25_matches.daa -o Combined_InteMAP_pp_LargerThan500_Lim_k25_matches.m8
+
+# Using the BLASTp results (Combined_InteMAP_pp_LargerThan500_Lim_k25_matches.m8) as input, 
+# the taxonomy of each gene was assigned by the lowest-common-ancestor algorithm in MEtaGenome ANalyzer (MEGAN5) v.5.11.3 (Huson et al., 2011) 
+# with the following parameters: Min Support: 1, Min Score: 40.0, Max Expected: 0.01, Top Percent: 10.0, Min-Complexity filter: 0.44. 
+# The taxonomy of the contigs was then assigned using a voting system: the taxonomy of each contig was determined by the majority of taxonomic assignments of the genes on the contig.
+
 
