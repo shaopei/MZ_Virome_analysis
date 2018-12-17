@@ -1,10 +1,11 @@
 from sys import argv
 input_otu_table = argv[1]
+IGC_annotate= argv[2] #'IGC_20150727/IGC.annotation_OF.summary'
 
 gene_KO_ann_dic ={}
 
 
-with open('/workdir/sc2457/IGC_20150727/IGC.annotation_OF.summary', 'U') as fi:
+with open(IGC_annotate, 'U') as fi:
     for l in fi:
         ll = l.strip().split('\t')
         gene_KO_ann_dic[ll[1]] = [ll[11],ll[7]]
