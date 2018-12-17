@@ -28,10 +28,17 @@ def subject_occurrence_per_file (f):
 
 def subject_occurrence_per_file_quick_memory_demanding (f): #not finished yet
 # f is file name
-    data = np.loadtxt(f, dtype=str, delimiter='\t', usecols=xrange(2))
-    query_c = Counter(data[:,0])
-    subject_c = Counter(data[:,1])
-    q_s_pair = Counter(zip(data[:,0],data[:,1]))
+    #data = np.loadtxt(f, dtype=str, delimiter='\t', usecols=xrange(3))
+    q_list=[]
+    s_list=[]
+    for l in open(f,"U").readlines():
+        ll=l.strip().split()
+        q_list.append(ll[0])
+        s_list.append(ll[1])
+
+    query_c = Counter(q_list)
+    subject_c = Counter(s_list)
+    q_s_pair = Counter(zip(q_list,s_list))
 
     for qs, count in q_s_pair.most_common():
         if count > 1:
