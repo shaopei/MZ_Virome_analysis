@@ -32,11 +32,7 @@ with open(input_otu_table, 'U') as f_t:
             geneID = l.strip().split('\t')[0]
             write_to_file(l.strip())
             write_to_file('\t')
-            try:
-                ko_ann.write('; '.join(gene_KO_ann_dic[geneID]))
-            except:
-                print l
-                ko_ann.write('unknown; unknown')
+            ko_ann.write('; '.join(gene_KO_ann_dic[geneID]))
             write_to_file('\n')
 
 for f in f_list:
