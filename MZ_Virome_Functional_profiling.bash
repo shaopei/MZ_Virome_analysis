@@ -42,18 +42,29 @@ mkdir diamond.temp
 /programs/diamond-0.7.5/diamond makedb --in IGC.pep -d IGC.pep -p 16
 # BLASTX using DIAMOND v0.7.5 
 /programs/diamond-0.7.5/diamond blastx -v -d IGC.pep -q 5S_PF_SeqPrepMerged_tagcleaned_sickled_${sample}.fastq -a diamond_output/5S_PF_SeqPrepMerged_tagcleaned_sickled_${sample}_matches -t diamond.temp 
+#output is 5S_PF_SeqPrepMerged_tagcleaned_sickled_${sample}_matches.daa
 
 cd diamond_output
 /programs/diamond-0.7.5/diamond view -a 5S_PF_SeqPrepMerged_tagcleaned_sickled_${sample}_matches.daa -o 5S_PF_SeqPrepMerged_tagcleaned_sickled_${sample}_matches.m8
 
 # DIAMOND outputs were organized by an in-house python script m8_parser.py to generate a read hits abundance matrix (diamond_blastx_m8_parsed_subject.txt)
 python m8_parser.py
+# output is diamond_blastx_m8_parsed_subject.txt
 
 # The matrix was then annotated according to the KEGG annotation of each gene provided by IGC. 
 python annotate_otu_table.py diamond_blastx_m8_parsed_subject.txt IGC_20150727/IGC.annotation_OF.summary
+# output is diamond_blastx_m8_parsed_subject_ko_ann.txt
 
+# Convert a tab-delimited table to a HDF5 for QIIME 1.9
+biom convert -i diamond_blastx_m8_parsed_subject_ko_ann.txt -o diamond_blastx_m8_parsed_subject_ko_ann.biom --table-type="OTU table" --to-hdf5 --process-obs-metadata taxonomy
+#biom convert -i diamond_blastx_m8_parsed_subject_ko_ann.biom -o diamond_blastx_m8_parsed_subject_ko_ann_back.txt --to-tsv --header-key taxonomy
+#biom summarize-table -i diamond_blastx_m8_parsed_subject_ko_ann.biom -o table_summary.txt
 
-
+#The annotated abundance matrix was rarified (subsampling without replacement) to 2,000,000 read hits per sample. 
+# Rarify the OTU table to 2000000 sequences/sample command
+single_rarefaction.py -i diamond_blastx_m8_parsed_subject_ko_ann.biom -o diamond_blastx_m8_parsed_subject_ko_ann_even2000000.biom -d 2000000
+echo summarize_taxa:level    1,2 > qiime_parameter.txt
+summarize_taxa_through_plots.py -o kegg_annotation_summary -i diamond_blastx_m8_parsed_subject_ko_ann_even2000000.biom -p qiime_parameter.txt
 
 
 

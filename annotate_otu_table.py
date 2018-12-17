@@ -25,8 +25,6 @@ def write_to_file (text):
 with open(input_otu_table, 'U') as f_t:
     for i, l in enumerate(f_t):
         if i == 0:
-            write_to_file (l)
-        elif i == 1:
             write_to_file (l.strip())
             write_to_file ('\ttaxonomy\n')
         else:
