@@ -16,3 +16,5 @@ Scripts to do the following steps:
 + Genes were predicted from the assembled contigs that were larger than 500 bp using GeneMarkS v.4.32 (Besemer et al., 2001). 
 + The amino acid sequence of the predicted genes were then used in a BLASTp search against the customized viral NR database of 621,095 sequences downloaded from http://pathology.wustl.edu/virusseeker/data/VirusDBNR_20131107_ID98.tgz (Lim et al., 2015) using DIAMOND v.0.7.5 (Buchfink et al., 2015) with maximum e-value cutoff 0.001 and maximum number of target sequences to report set to 25. 
 + Using the BLASTp results, the taxonomy of each gene was assigned by the lowest-common-ancestor algorithm in MEtaGenome ANalyzer (MEGAN5) v.5.11.3 (Huson et al., 2011) with the following parameters: Min Support: 1, Min Score: 40.0, Max Expected: 0.01, Top Percent: 10.0, Min-Complexity filter: 0.44. The taxonomy of the contigs was then assigned using a voting system: the taxonomy of each contig was determined by the majority of taxonomic assignments of the genes on the contig.
+
+## Other python scripts used in the two bash scripts
